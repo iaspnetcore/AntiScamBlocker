@@ -6,7 +6,7 @@ import android.telecom.CallScreeningService;
 import androidx.annotation.NonNull;
 
 /**
-* 电话拦截程序
+* 电话拦截服务程序
  * When an incoming or outgoing call occurs, the system binds to your service and invokes onScreenCall.
  * You must respond using respondToCall before your method execution completes to avoid timeouts.
  */

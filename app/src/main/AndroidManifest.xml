@@ -28,7 +28,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Step 2.2 增加服务声明 注册 CallScreeningService 拦截服务-->
+        <!-- Step 1 增加服务注册声明 注册 CallScreeningService 拦截服务-->
         <!-- https://developer.android.com/reference/android/telecom/CallScreeningService -->
         <!-- Your service must be exported, protected by BIND_SCREENING_SERVICE -->
         <service
