@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 
 /**
 * 电话拦截程序
+ * When an incoming or outgoing call occurs, the system binds to your service and invokes onScreenCall.
+ * You must respond using respondToCall before your method execution completes to avoid timeouts.
  */
 public class AntiScamCallService extends CallScreeningService {
 
@@ -19,16 +21,41 @@ public class AntiScamCallService extends CallScreeningService {
             Uri handle = callDetails.getHandle();
             String phoneNumber = (handle != null) ? handle.getSchemeSpecificPart() : "";
 
-            // Step 3.3: Validate against anti-scam logic
-            if (isScamNumber(phoneNumber)) {
-                // Execute the intercept block and hang up
-                blockAndRejectCall(callDetails);
-                return;
+            if (shouldBlockCall(phoneNumber)) {
+                buildAndSendResponse(callDetails, true);
+            } else {
+                buildAndSendResponse(callDetails, false);
             }
+        } else {
+            // Pass through outgoing calls immediately
+            buildAndSendResponse(callDetails, false);
         }
 
-        // Pass-through: Allow normal calls to ring through smoothly
-        respondToCall(callDetails, new CallResponse.Builder().build());
+
+    }
+
+    private boolean shouldBlockCall(String phoneNumber) {
+        // Implement your spam detection or lookup logic here
+        return phoneNumber.startsWith("0");
+    }
+
+    private void buildAndSendResponse(Call.Details callDetails, boolean shouldBlock) {
+        CallResponse.Builder responseBuilder = new CallResponse.Builder();
+
+        if (shouldBlock) {
+            responseBuilder.setDisallowCall(true)
+                    .setRejectCall(true)
+                    .setSkipCallLog(false)
+                    .setSkipNotification(true);
+        } else {
+            responseBuilder.setDisallowCall(false)
+                    .setRejectCall(false)
+                    .setSkipCallLog(false)
+                    .setSkipNotification(false);
+        }
+
+        // Must provide the exact Call.Details object and the response
+        respondToCall(callDetails, responseBuilder.build());
     }
 
     /**

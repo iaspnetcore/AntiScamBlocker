@@ -19,6 +19,8 @@ import androidx.core.view.WindowInsetsCompat;
 public class MainActivity extends AppCompatActivity {
 
     // 1. 注册结果监听器，用来接收系统角色弹窗的返回结果
+    // Requesting the Role
+    // your app holds the RoleManager.ROLE_CALL_SCREENING. You must request this from the user via the system dialog.
     private final ActivityResultLauncher<Intent> roleRequestLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK) {
@@ -27,6 +29,15 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "Permission Denied: Cannot block calls without this role.", Toast.LENGTH_LONG).show();
                 }
             });
+
+    private void requestCallScreeningRole() {
+        RoleManager roleManager = (RoleManager) getSystemService(Context.ROLE_SERVICE);
+
+        if (roleManager != null && !roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)) {
+            Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING);
+            roleRequestLauncher.launch(intent);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,13 +74,18 @@ public class MainActivity extends AppCompatActivity {
             RoleManager roleManager = (RoleManager) getSystemService(Context.ROLE_SERVICE);
 
             if (roleManager != null) {
-                // 检查：我们 App 此时有没有拿着“来电拦截角色”
                 boolean isRoleHeld = roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING);
 
                 if (!isRoleHeld) {
-                    // 没有权限，创建隐式意图，准备蹦出官方勾选弹窗
-                    Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING);
-                    roleRequestLauncher.launch(intent);
+                    try {
+                        Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING);
+                        roleRequestLauncher.launch(intent);
+                    } catch (Exception e) {
+                        // 如果系统安全策略阻塞了直接弹窗，强行转跳到全局的默认拦截应用列表页面
+                        Toast.makeText(this, "正在跳转系统设置...", Toast.LENGTH_SHORT).show();
+                        Intent fallbackIntent = new Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS);
+                        startActivity(fallbackIntent);
+                    }
                 } else {
                     Toast.makeText(this, "Anti-Scam active. Background screening is running.", Toast.LENGTH_SHORT).show();
                 }

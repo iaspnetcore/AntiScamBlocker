@@ -29,10 +29,11 @@
         </activity>
 
         <!-- Step 2.2 增加服务声明 注册 CallScreeningService 拦截服务-->
-        <!-- 为了让 Android 15 系统在有来电时能够通知到我们的 App，必须在 <application> 标签内部声明一个自定义的服务。该服务必须受到 BIND_CALL_SCREENING_SERVICE 权限的保护，否则系统为了安全会直接忽略它。 -->
+        <!-- https://developer.android.com/reference/android/telecom/CallScreeningService -->
+        <!-- Your service must be exported, protected by BIND_SCREENING_SERVICE -->
         <service
             android:name=".AntiScamCallService"
-            android:permission="android.permission.BIND_CALL_STREAMING_SERVICE"
+            android:permission="android.permission.BIND_SCREENING_SERVICE"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.telecom.CallScreeningService" />
