@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Step 2.1 增加权限声明 -->
+    <!-- 在 Android 中，要读取电话状态或拦截电话，必须在 <manifest> 标签内、<application> 标签上方添加对应的权限声明。-->
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
