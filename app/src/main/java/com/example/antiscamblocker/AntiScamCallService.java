@@ -5,6 +5,9 @@ import android.telecom.Call;
 import android.telecom.CallScreeningService;
 import androidx.annotation.NonNull;
 
+/**
+* 电话拦截程序
+ */
 public class AntiScamCallService extends CallScreeningService {
 
     @Override
