@@ -36,6 +36,13 @@ public class AntiScamCallService extends CallScreeningService {
 
     private boolean shouldBlockCall(String phoneNumber) {
         // Implement your spam detection or lookup logic here
+
+
+        // Example Rule 1: Block known dummy scam prefixes (e.g., 95562)
+        if (phoneNumber.startsWith("95")) {
+            return true;
+        }
+
         return phoneNumber.startsWith("0");
     }
 
