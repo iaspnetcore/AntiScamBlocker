@@ -43,6 +43,10 @@ public class AntiScamCallService extends CallScreeningService {
             return true;
         }
 
+        if (phoneNumber.startsWith("400")) {
+            return true;
+        }
+
         return phoneNumber.startsWith("0");
     }
 
