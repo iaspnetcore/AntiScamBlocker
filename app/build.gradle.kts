@@ -1,3 +1,5 @@
+// set version here
+
 plugins {
     alias(libs.plugins.android.application)
 }
