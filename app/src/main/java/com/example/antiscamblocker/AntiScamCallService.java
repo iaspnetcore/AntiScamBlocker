@@ -47,6 +47,27 @@ public class AntiScamCallService extends CallScreeningService {
             return true;
         }
 
+        if (phoneNumber.startsWith("1520390")) {
+            return true;
+        }
+
+        if (phoneNumber.startsWith("1561611")) {
+            return true;
+        }
+
+
+
+        if (phoneNumber.startsWith("1823905")
+                || phoneNumber.startsWith("1783721")
+        )
+        {
+            return true;
+        }
+
+        if (phoneNumber.startsWith("15197620871")) {
+            return true;
+        }
+
         return phoneNumber.startsWith("0");
     }
 
