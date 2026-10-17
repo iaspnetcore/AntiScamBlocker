@@ -68,6 +68,10 @@ public class AntiScamCallService extends CallScreeningService {
             return true;
         }
 
+
+
+
+
         return phoneNumber.startsWith("0");
     }
 
