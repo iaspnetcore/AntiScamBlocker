@@ -85,6 +85,7 @@ public class AntiScamCallService extends CallScreeningService {
         }
 
 
+        PhoneLocationUtils.PhoneInfo info = phoneLocationUtils.query(phoneNumber);
 
 
 
