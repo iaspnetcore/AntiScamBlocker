@@ -14,19 +14,6 @@ import android.util.Log;
  */
 public class AntiScamCallService extends CallScreeningService {
 
-    private static final String TAG = "AntiScamCallService";
-    // 声明归属地工具类实例 -
-    // PhoneLocationUtils 的初始化应该放在 CallScreeningService 的 onCreate() 生命周期方法中
-    private PhoneLocationUtils phoneLocationUtils;
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        // 2. 在服务被系统绑定初始化时，加载一次 phone.dat
-        // 使用 getApplicationContext() 确保生命周期安全
-        phoneLocationUtils = PhoneLocationUtils.getInstance(getApplicationContext());
-        Log.i(TAG, "AntiScamCallService created, PhoneLocationUtils initialized.");
-    }
 
     @Override
     public void onScreenCall(@NonNull Call.Details callDetails) {
@@ -85,7 +72,22 @@ public class AntiScamCallService extends CallScreeningService {
         }
 
 
-        PhoneLocationUtils.PhoneInfo info = phoneLocationUtils.query(phoneNumber);
+        // 1. 直接调用静态方法（第一次调用时会自动完成 assets 解压与初始化，后续直接走内存二分查找）
+        PhoneLocationUtils.LocationResult result = PhoneLocationUtils.getPhoneLocation(this, phoneNumber);
+
+        if (result != null) {
+          //  Log.d(TAG, "号码: " + phoneNumber + " | 省份: " + result.province + " | 城市: " + result.city + " | 运营商: " + result.getCarrierName());
+
+            // 示例：如果你想根据省份或城市拦截，可以直接写在这里
+            // if ("北京市".equals(result.city)) { return true; }
+            // if (!"北京市".equals(result.city)) { return true; }
+
+            if ("湖南省".equals(result.province)) {
+                return true;
+            }
+        }
+
+
 
 
 
