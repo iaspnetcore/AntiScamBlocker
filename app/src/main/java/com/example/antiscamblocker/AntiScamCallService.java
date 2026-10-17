@@ -5,12 +5,28 @@ import android.telecom.Call;
 import android.telecom.CallScreeningService;
 import androidx.annotation.NonNull;
 
+import android.util.Log;
+
 /**
 * 电话拦截服务程序
  * When an incoming or outgoing call occurs, the system binds to your service and invokes onScreenCall.
  * You must respond using respondToCall before your method execution completes to avoid timeouts.
  */
 public class AntiScamCallService extends CallScreeningService {
+
+    private static final String TAG = "AntiScamCallService";
+    // 声明归属地工具类实例 -
+    // PhoneLocationUtils 的初始化应该放在 CallScreeningService 的 onCreate() 生命周期方法中
+    private PhoneLocationUtils phoneLocationUtils;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // 2. 在服务被系统绑定初始化时，加载一次 phone.dat
+        // 使用 getApplicationContext() 确保生命周期安全
+        phoneLocationUtils = PhoneLocationUtils.getInstance(getApplicationContext());
+        Log.i(TAG, "AntiScamCallService created, PhoneLocationUtils initialized.");
+    }
 
     @Override
     public void onScreenCall(@NonNull Call.Details callDetails) {
