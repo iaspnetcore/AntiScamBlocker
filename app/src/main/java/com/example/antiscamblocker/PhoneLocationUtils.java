@@ -1,8 +1,5 @@
 package com.example.antiscamblocker;
 
-
-
-
 import android.content.Context;
 import android.util.Log;
 
@@ -13,6 +10,8 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PhoneLocationUtils {
     private static final String TAG = "PhoneLocationUtils";
@@ -25,6 +24,10 @@ public class PhoneLocationUtils {
     private int indexOffset;
     private int dictOffset;
     private int dictLength;
+    private int cityCount;
+
+    // 缓存城市字典数组，利用 cityId 下标直接 O(1) 获取
+    private CityEntry[] cityDictionary;
 
     /**
      * 归属地查询结果封装类
@@ -45,13 +48,20 @@ public class PhoneLocationUtils {
         }
     }
 
+    private static class CityEntry {
+        String province;
+        String city;
+
+        public CityEntry(String province, String city) {
+            this.province = province;
+            this.city = city;
+        }
+    }
+
     private PhoneLocationUtils(Context context) {
         init(context);
     }
 
-    /**
-     * 静态初始化方法（建议在自定义 Application 的 onCreate 中调用一次，也可以由工具类自动持有）
-     */
     public static void initContext(Context context) {
         if (instance == null) {
             synchronized (PhoneLocationUtils.class) {
@@ -63,17 +73,12 @@ public class PhoneLocationUtils {
     }
 
     private static PhoneLocationUtils getInstance(Context context) {
-        if (instance == null) {
+        if (instance == null && context != null) {
             initContext(context);
         }
         return instance;
     }
 
-    /**
-     * 对外提供的静态便捷方法
-     * 满足调用：PhoneLocationUtils.LocationResult result = PhoneLocationUtils.getPhoneLocation("13812345678");
-     * 注：若全局已在 Application 初始化过 context，调用此方法时直接传 null 或使用重载均可。
-     */
     public static LocationResult getPhoneLocation(Context context, String phoneNumber) {
         PhoneLocationUtils utils = getInstance(context);
         if (utils == null) {
@@ -115,11 +120,56 @@ public class PhoneLocationUtils {
             indexOffset = buffer.getInt(12);
             dictOffset = buffer.getInt(20);
             dictLength = buffer.getInt(24);
+            cityCount = buffer.getInt(28);
 
-            Log.i(TAG, "Phone.dat initialized successfully. Record count: " + recordCount);
+            // 初始化时加载并解析整个城市字典区
+            loadCityDictionary();
+
+            Log.i(TAG, "Phone.dat initialized successfully. Record count: " + recordCount + ", City count: " + cityCount);
 
         } catch (Exception e) {
             Log.e(TAG, "Failed to initialize phone.dat", e);
+        }
+    }
+
+    /**
+     * 一次性将字典区全部加载到内存数组中
+     */
+    private void loadCityDictionary() {
+        try {
+            datFile.seek(dictOffset);
+            byte[] dictBytes = new byte[dictLength];
+            datFile.readFully(dictBytes);
+
+            ByteBuffer buffer = ByteBuffer.wrap(dictBytes);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+            List<CityEntry> entries = new ArrayList<>();
+            while (buffer.hasRemaining()) {
+                // 1. 读取省份长度 (uint16)
+                if (buffer.remaining() < 2) break;
+                int pLen = buffer.getShort() & 0xFFFF;
+
+                // 2. 读取省份文本
+                byte[] pBytes = new byte[pLen];
+                buffer.get(pBytes);
+                String province = new String(pBytes, StandardCharsets.UTF_8);
+
+                // 3. 读取城市长度 (uint16)
+                int cLen = buffer.getShort() & 0xFFFF;
+
+                // 4. 读取城市文本
+                byte[] cBytes = new byte[cLen];
+                buffer.get(cBytes);
+                String city = new String(cBytes, StandardCharsets.UTF_8);
+
+                entries.add(new CityEntry(province, city));
+            }
+
+            cityDictionary = entries.toArray(new CityEntry[0]);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to load city dictionary", e);
+            cityDictionary = new CityEntry[0];
         }
     }
 
@@ -133,7 +183,7 @@ public class PhoneLocationUtils {
 
             int low = 0;
             int high = recordCount - 1;
-            int recordSize = 10;
+            int recordSize = 10; // phone(4) + city_id(4) + carrier_id(2)
 
             while (low <= high) {
                 int mid = (low + high) >>> 1;
@@ -150,13 +200,21 @@ public class PhoneLocationUtils {
 
                 if (currentPrefix == prefix) {
                     int cityId = buf.getInt(4);
-                    int carrierId = buf.getShort(8);
+                    int carrierId = buf.getShort(8) & 0xFFFF;
 
                     LocationResult result = new LocationResult();
                     result.carrierId = carrierId;
 
-                    // 从字典区解析省份和城市（假设字典区存储格式为 "省份 城市" 或由特定分隔符隔开，也可以根据实际 dat 格式调整）
-                    parseLocationText(cityId, result);
+                    // 直接通过 cityId 下标从内存字典中获取省市
+                    if (cityDictionary != null && cityId >= 0 && cityId < cityDictionary.length) {
+                        CityEntry entry = cityDictionary[cityId];
+                        result.province = entry.province;
+                        result.city = entry.city;
+                    } else {
+                        result.province = "未知";
+                        result.city = "未知";
+                    }
+
                     return result;
                 } else if (currentPrefix < prefix) {
                     low = mid + 1;
@@ -168,51 +226,5 @@ public class PhoneLocationUtils {
             Log.e(TAG, "Error querying phone number", e);
         }
         return null;
-    }
-
-    /**
-     * 解析字典文本并拆分省份与城市
-     */
-    private void parseLocationText(int cityId, LocationResult result) {
-        try {
-            long targetOffset = (long) dictOffset + cityId;
-            if (targetOffset >= dictOffset + dictLength) {
-                result.province = "未知";
-                result.city = "未知";
-                return;
-            }
-
-            datFile.seek(targetOffset);
-
-            byte[] lenBytes = new byte[2];
-            datFile.readFully(lenBytes);
-            int strLen = ByteBuffer.wrap(lenBytes).order(ByteOrder.LITTLE_ENDIAN).getShort() & 0xFFFF;
-
-            if (strLen <= 0 || strLen > 512) {
-                result.province = "未知";
-                result.city = "未知";
-                return;
-            }
-
-            byte[] strBytes = new byte[strLen];
-            datFile.readFully(strBytes);
-            String fullLocation = new String(strBytes, StandardCharsets.UTF_8); // 例如格式为 "广东 深圳" 或 "广东省深圳市"
-
-            // 依据实际存储格式进行拆分（以下以常见的空格分隔或无分隔符为例）
-            if (fullLocation.contains(" ")) {
-                String[] parts = fullLocation.split(" ", 2);
-                result.province = parts[0];
-                result.city = parts.length > 1 ? parts[1] : "";
-            } else {
-                // 如果没有空格，可以简单将全称赋给省或城，或按常规省份简称切割
-                result.province = fullLocation;
-                result.city = "";
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error reading dictionary", e);
-            result.province = "未知";
-            result.city = "未知";
-        }
     }
 }
