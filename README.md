@@ -9,9 +9,9 @@ remote:https://github.com/iaspnetcore/AntiScamBlocker
 
 developer tools：Android Studio Rabbit 1 | 2026.2.1
 
-developer lan： java
+developer language： java
 
-git tools:github desktop
+git tools:github desktop.exe on windows 10
 
 
 ## Installation
@@ -31,7 +31,7 @@ useful links
 
 PhoneNumber Library
 
-https://github.com/jieeit/phone
+come from:https://github.com/jieeit/phone
 
 phone.dat：https://github.com/jieeit/phone/tree/main/src/data/phone.dat
 

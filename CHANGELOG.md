@@ -1,26 +1,31 @@
-20261018
+## 20261018
+
+添加Android本地手机号归属地查询实现
 
 add PhoneNumber library
 
 come from：https://github.com/jieeit/phone
 
-数据库查寻- 注册app为实例
+数据库查寻服务功能函数- 注册为app全局实例
 
 
 
 
-20261017
+## 20261017
 
 add PhoneNumber library
 
 come from：https://github.com/jieeit/phone
 
-数据库查寻- 注册为实例
+数据库查寻- 注册为CallScreeningService实例
 
 
 
 
-202610
+## 202610
+
+实现CallScreeningService函数
+
 
 The CallScreeningService in Android 15 (API level 35) requires a strict combination of manifest declarations, runtime role requests, and precise handling of the service lifecycle to prevent the system from killing your background process.
 
