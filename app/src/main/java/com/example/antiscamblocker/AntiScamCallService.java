@@ -89,6 +89,13 @@ public class AntiScamCallService extends CallScreeningService {
 
                 String province = result.province;
 
+                String carrierName = result.getCarrierName();
+
+                if (("湖南".equals(province) || "湖南省".equals(province)) &&   "中国联通".equals(carrierName))
+                {
+                    return true;
+                }
+
                 if ("湖南".equals(province) || "湖南省".equals(province) ||
                         "江苏".equals(province) || "江苏省".equals(province) ||
                         "浙江".equals(province) || "浙江省".equals(province)) {
