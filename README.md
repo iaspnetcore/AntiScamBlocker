@@ -24,10 +24,12 @@ Direct Download: Go to the official AntiScamBlocker Download Page on your phone 
 
 none
 
+## AntiScamBlocker Release Timeline
 
 
 
-useful links
+
+**useful links**
 
 PhoneNumber Library
 
